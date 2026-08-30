@@ -3325,19 +3325,531 @@ function evaluateSpecialDeepResult() {
 }
 
 
+
+// =====================================================
+// STEP 12L：SPECIAL / 覚醒ルート演出
+// =====================================================
+
+function ensureRouteTransitionStyles() {
+
+  if (
+    document.getElementById(
+      "routeTransitionStyles"
+    )
+  ) {
+    return;
+  }
+
+  const style =
+    document.createElement(
+      "style"
+    );
+
+  style.id =
+    "routeTransitionStyles";
+
+  style.textContent = `
+    .dq-route-transition-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: auto;
+      animation: dqRouteOverlayIn 240ms ease forwards;
+    }
+
+    .dq-route-transition-overlay.is-special {
+      background:
+        radial-gradient(circle at 50% 46%, rgba(138, 57, 210, 0.32), transparent 26%),
+        radial-gradient(circle at 50% 50%, rgba(15, 3, 24, 0.76), rgba(2, 4, 8, 0.97) 72%);
+    }
+
+    .dq-route-transition-overlay.is-awakening {
+      background:
+        radial-gradient(circle at 50% 45%, rgba(255, 213, 84, 0.32), transparent 24%),
+        radial-gradient(circle at 50% 50%, rgba(105, 47, 148, 0.40), transparent 46%),
+        linear-gradient(180deg, rgba(12, 7, 22, 0.96), rgba(1, 5, 10, 0.98));
+    }
+
+    .dq-route-transition-overlay::before,
+    .dq-route-transition-overlay::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(72vw, 660px);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.55);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dq-route-transition-overlay::before {
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow:
+        0 0 38px rgba(146, 68, 220, 0.38),
+        inset 0 0 36px rgba(255,255,255,0.05);
+      animation: dqRouteRingPulse 1.45s ease-out 0.08s both;
+    }
+
+    .dq-route-transition-overlay::after {
+      width: min(54vw, 490px);
+      border: 2px solid rgba(255,255,255,0.12);
+      animation: dqRouteRingPulse 1.35s ease-out 0.22s both;
+    }
+
+    .dq-route-transition-overlay.is-awakening::before {
+      border-color: rgba(255, 221, 100, 0.64);
+      box-shadow:
+        0 0 52px rgba(255, 205, 71, 0.48),
+        inset 0 0 46px rgba(176, 90, 255, 0.15);
+    }
+
+    .dq-route-transition-overlay.is-awakening::after {
+      border-color: rgba(199, 131, 255, 0.45);
+    }
+
+    .dq-route-transition-panel {
+      position: relative;
+      z-index: 2;
+      width: min(92vw, 620px);
+      padding: 32px 24px 30px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(6, 9, 15, 0.72);
+      box-shadow: 0 24px 90px rgba(0,0,0,0.52);
+      backdrop-filter: blur(12px);
+      text-align: center;
+      transform: translateY(10px) scale(0.96);
+      opacity: 0;
+      animation: dqRoutePanelIn 460ms cubic-bezier(.2,.75,.2,1) 180ms forwards;
+    }
+
+    .dq-route-transition-overlay.is-special .dq-route-transition-panel {
+      border-color: rgba(180, 105, 255, 0.42);
+      box-shadow:
+        0 24px 90px rgba(0,0,0,0.58),
+        0 0 46px rgba(139, 69, 217, 0.24);
+    }
+
+    .dq-route-transition-overlay.is-awakening .dq-route-transition-panel {
+      border-color: rgba(255, 220, 102, 0.52);
+      box-shadow:
+        0 24px 90px rgba(0,0,0,0.58),
+        0 0 56px rgba(255, 205, 70, 0.25);
+    }
+
+    .dq-route-transition-kicker {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      margin-bottom: 12px;
+      padding: 5px 13px;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.16em;
+    }
+
+    .is-special .dq-route-transition-kicker {
+      color: #cf9aff;
+      background: rgba(168, 92, 232, 0.10);
+    }
+
+    .is-awakening .dq-route-transition-kicker {
+      color: #ffe078;
+      background: rgba(255, 210, 76, 0.10);
+    }
+
+    .dq-route-transition-title {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(28px, 7vw, 44px);
+      line-height: 1.28;
+      letter-spacing: 0.025em;
+      text-shadow: 0 0 28px rgba(255,255,255,0.10);
+    }
+
+    .is-special .dq-route-transition-title {
+      text-shadow:
+        0 0 28px rgba(197, 124, 255, 0.34),
+        0 0 64px rgba(116, 50, 181, 0.24);
+    }
+
+    .is-awakening .dq-route-transition-title {
+      color: #fff9da;
+      text-shadow:
+        0 0 26px rgba(255, 220, 90, 0.42),
+        0 0 66px rgba(191, 111, 255, 0.30);
+    }
+
+    .dq-route-transition-subtitle {
+      margin: 13px 0 0;
+      color: rgba(231, 237, 244, 0.78);
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .dq-route-transition-flare {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      pointer-events: none;
+      animation: dqRouteFlare 1.20s ease-out 0.16s both;
+    }
+
+    .is-special .dq-route-transition-flare {
+      background: #c984ff;
+      box-shadow:
+        0 0 40px 20px rgba(193, 112, 255, 0.22),
+        0 0 110px 46px rgba(108, 44, 177, 0.14);
+    }
+
+    .is-awakening .dq-route-transition-flare {
+      background: #ffe47b;
+      box-shadow:
+        0 0 42px 20px rgba(255, 221, 95, 0.28),
+        0 0 120px 54px rgba(182, 97, 255, 0.17);
+    }
+
+    .dq-route-transition-overlay.is-leaving {
+      animation: dqRouteOverlayOut 300ms ease forwards;
+    }
+
+    #questionScreen.dq-route-special {
+      border-color: rgba(179, 101, 245, 0.56) !important;
+      background:
+        radial-gradient(circle at 88% 5%, rgba(130, 52, 202, 0.17), transparent 33rem),
+        linear-gradient(145deg, rgba(31, 18, 48, 0.95), rgba(8, 13, 23, 0.94)) !important;
+      box-shadow:
+        0 24px 70px rgba(0,0,0,0.42),
+        0 0 34px rgba(131, 58, 204, 0.18) !important;
+    }
+
+    #questionScreen.dq-route-special .diagnosis-progress-fill {
+      background: linear-gradient(90deg, #8c55d9, #d194ff) !important;
+      box-shadow: 0 0 15px rgba(196, 123, 255, 0.40) !important;
+    }
+
+    #questionScreen.dq-route-special .diagnosis-progress-percent,
+    #questionScreen.dq-route-special .diagnosis-progress-phase {
+      color: #d8a8ff !important;
+    }
+
+    #questionScreen.dq-route-special #answerButtons > .answer-button:hover:not(:disabled) {
+      border-color: rgba(198, 128, 255, 0.56) !important;
+      background: linear-gradient(145deg, rgba(157, 83, 222, 0.13), rgba(255,255,255,0.04)) !important;
+    }
+
+    #questionScreen.dq-route-awakening {
+      border-color: rgba(255, 215, 91, 0.70) !important;
+      background:
+        radial-gradient(circle at 82% 4%, rgba(255, 205, 66, 0.17), transparent 28rem),
+        radial-gradient(circle at 6% 94%, rgba(133, 61, 211, 0.14), transparent 26rem),
+        linear-gradient(145deg, rgba(37, 28, 39, 0.96), rgba(9, 13, 22, 0.95)) !important;
+      box-shadow:
+        0 24px 70px rgba(0,0,0,0.44),
+        0 0 42px rgba(255, 204, 65, 0.18) !important;
+      animation: dqAwakeningCardGlow 2.8s ease-in-out infinite;
+    }
+
+    #questionScreen.dq-route-awakening .diagnosis-progress-fill {
+      background: linear-gradient(90deg, #9d62e8, #ffd95f) !important;
+      box-shadow: 0 0 17px rgba(255, 216, 84, 0.48) !important;
+    }
+
+    #questionScreen.dq-route-awakening .diagnosis-progress-percent,
+    #questionScreen.dq-route-awakening .diagnosis-progress-phase {
+      color: #ffe385 !important;
+    }
+
+    #questionScreen.dq-route-awakening #answerButtons > .answer-button:hover:not(:disabled) {
+      border-color: rgba(255, 220, 104, 0.64) !important;
+      background: linear-gradient(145deg, rgba(255, 211, 74, 0.11), rgba(144, 79, 215, 0.09)) !important;
+    }
+
+    @keyframes dqRouteOverlayIn {
+      to { opacity: 1; }
+    }
+
+    @keyframes dqRouteOverlayOut {
+      to { opacity: 0; }
+    }
+
+    @keyframes dqRoutePanelIn {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes dqRouteRingPulse {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.40);
+      }
+      35% { opacity: 0.72; }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.26);
+      }
+    }
+
+    @keyframes dqRouteFlare {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+      25% { opacity: 0.92; }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(12); }
+    }
+
+    @keyframes dqAwakeningCardGlow {
+      0%, 100% {
+        box-shadow:
+          0 24px 70px rgba(0,0,0,0.44),
+          0 0 30px rgba(255, 204, 65, 0.12);
+      }
+      50% {
+        box-shadow:
+          0 24px 70px rgba(0,0,0,0.44),
+          0 0 52px rgba(255, 204, 65, 0.25);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dq-route-transition-overlay,
+      .dq-route-transition-panel,
+      .dq-route-transition-overlay::before,
+      .dq-route-transition-overlay::after,
+      .dq-route-transition-flare,
+      #questionScreen.dq-route-awakening {
+        animation: none !important;
+      }
+
+      .dq-route-transition-overlay,
+      .dq-route-transition-panel {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(
+    style
+  );
+}
+
+
+function setDiagnosisRouteVisualMode(
+  mode = "normal"
+) {
+
+  const questionScreen =
+    document.getElementById(
+      "questionScreen"
+    );
+
+  if (!questionScreen) {
+    return;
+  }
+
+  questionScreen.classList.remove(
+    "dq-route-special",
+    "dq-route-awakening"
+  );
+
+  if (mode === "special") {
+    questionScreen.classList.add(
+      "dq-route-special"
+    );
+  }
+
+  if (mode === "awakening") {
+    questionScreen.classList.add(
+      "dq-route-awakening"
+    );
+  }
+}
+
+
+function playDiagnosisRouteTransition({
+  mode,
+  kicker,
+  title,
+  subtitle,
+  duration = 1750
+}) {
+
+  ensureRouteTransitionStyles();
+
+  const oldOverlay =
+    document.querySelector(
+      ".dq-route-transition-overlay"
+    );
+
+  if (oldOverlay) {
+    oldOverlay.remove();
+  }
+
+  const reducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.(
+      "(prefers-reduced-motion: reduce)"
+    )?.matches;
+
+  const actualDuration =
+    reducedMotion
+      ? 720
+      : duration;
+
+  return new Promise(resolve => {
+
+    const overlay =
+      document.createElement(
+        "div"
+      );
+
+    overlay.className =
+      `dq-route-transition-overlay is-${mode}`;
+
+    overlay.setAttribute(
+      "role",
+      "status"
+    );
+
+    overlay.setAttribute(
+      "aria-live",
+      "polite"
+    );
+
+    const flare =
+      document.createElement(
+        "div"
+      );
+
+    flare.className =
+      "dq-route-transition-flare";
+
+    const panel =
+      document.createElement(
+        "div"
+      );
+
+    panel.className =
+      "dq-route-transition-panel";
+
+    const kickerEl =
+      document.createElement(
+        "div"
+      );
+
+    kickerEl.className =
+      "dq-route-transition-kicker";
+
+    kickerEl.textContent =
+      kicker;
+
+    const titleEl =
+      document.createElement(
+        "h2"
+      );
+
+    titleEl.className =
+      "dq-route-transition-title";
+
+    titleEl.textContent =
+      title;
+
+    const subtitleEl =
+      document.createElement(
+        "p"
+      );
+
+    subtitleEl.className =
+      "dq-route-transition-subtitle";
+
+    subtitleEl.textContent =
+      subtitle;
+
+    panel.appendChild(
+      kickerEl
+    );
+
+    panel.appendChild(
+      titleEl
+    );
+
+    panel.appendChild(
+      subtitleEl
+    );
+
+    overlay.appendChild(
+      flare
+    );
+
+    overlay.appendChild(
+      panel
+    );
+
+    document.body.appendChild(
+      overlay
+    );
+
+    window.setTimeout(
+      () => {
+
+        overlay.classList.add(
+          "is-leaving"
+        );
+
+        window.setTimeout(
+          () => {
+            overlay.remove();
+            resolve();
+          },
+          reducedMotion ? 80 : 300
+        );
+
+      },
+      actualDuration
+    );
+  });
+}
+
 // =====================================================
 // SPECIAL深掘り：開始
 // =====================================================
 
-function startSpecialDeepStep() {
+async function startSpecialDeepStep() {
 
   diagnosisState.route =
     "SPECIAL_DEEP";
+
+  setDiagnosisRouteVisualMode(
+    "special"
+  );
 
   setDiagnosisProgress(
     77,
     "SPECIAL適性を深掘り中"
   );
+
+  await playDiagnosisRouteTransition({
+    mode: "special",
+    kicker: "SPECIAL ZONE",
+    title: "……強い反応を検出しました",
+    subtitle: "通常判定を超える反応です。特別判定へ移行します。",
+    duration: 1750
+  });
 
   // ノーマル分岐の直前履歴を
   // SPECIAL質問選びへ引きずらない
@@ -4974,12 +5486,7 @@ function evaluateAwakeningResult() {
 // 覚醒・変身：開始
 // =====================================================
 
-function startAwakeningStep() {
-
-  setDiagnosisProgress(
-    93,
-    "最終形態を判定中"
-  );
+async function startAwakeningStep() {
 
   const candidateId =
     diagnosisState
@@ -4999,6 +5506,23 @@ function startAwakeningStep() {
 
   diagnosisState.route =
     "AWAKENING";
+
+  setDiagnosisRouteVisualMode(
+    "awakening"
+  );
+
+  setDiagnosisProgress(
+    93,
+    "最終形態を判定中"
+  );
+
+  await playDiagnosisRouteTransition({
+    mode: "awakening",
+    kicker: "AWAKENING CHANCE",
+    title: "さらに強い反応が……",
+    subtitle: "覚醒の兆しを確認。最終形態の追加判定へ移行します。",
+    duration: 1900
+  });
 
   diagnosisState
     .awakeningCandidateId =
@@ -11373,6 +11897,10 @@ function installProductionSiteUI() {
 function showFinalResult() {
 
   ensureFinalResultStyles();
+
+  setDiagnosisRouteVisualMode(
+    "normal"
+  );
 
   diagnosisState.route =
     "RESULT";
@@ -17963,6 +18491,54 @@ function renderQuestion(question) {
   ensureDiagnosisProgressUI();
   updateDiagnosisProgress();
 
+  const routeBadgeId =
+    "dqRouteQuestionBadge";
+
+  document
+    .getElementById(
+      routeBadgeId
+    )
+    ?.remove();
+
+  if (
+    diagnosisState.route ===
+      "SPECIAL_DEEP" ||
+    diagnosisState.route ===
+      "AWAKENING"
+  ) {
+
+    const routeBadge =
+      document.createElement(
+        "div"
+      );
+
+    routeBadge.id =
+      routeBadgeId;
+
+    routeBadge.style.cssText =
+      "display:inline-flex;margin:10px auto 0;padding:5px 11px;border-radius:999px;font-size:10px;font-weight:900;letter-spacing:.14em;border:1px solid currentColor;";
+
+    if (
+      diagnosisState.route ===
+      "AWAKENING"
+    ) {
+      routeBadge.textContent =
+        "AWAKENING CHANCE";
+      routeBadge.style.color =
+        "#ffe385";
+    } else {
+      routeBadge.textContent =
+        "SPECIAL ZONE";
+      routeBadge.style.color =
+        "#d8a8ff";
+    }
+
+    questionText.insertAdjacentElement(
+      "beforebegin",
+      routeBadge
+    );
+  }
+
 
   questionText.textContent =
     question.text;
@@ -18562,6 +19138,10 @@ function startDiagnosis() {
 
   diagnosisState =
     createInitialState();
+
+  setDiagnosisRouteVisualMode(
+    "normal"
+  );
 
 
   document
