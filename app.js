@@ -7937,9 +7937,9 @@ function drawShareCardCanvas(
     shareRadarItems,
     {
       centerX: 266,
-      centerY: 470,
-      radius: 92,
-      labelRadius: 132,
+      centerY: 450,
+      radius: 90,
+      labelRadius: 124,
       theme,
       showGuides: false
     }
