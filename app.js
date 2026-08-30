@@ -7927,34 +7927,6 @@ function drawShareCardCanvas(
 
   }
 
-  const topAxes = AXES
-    .map(axis => ({ axis, value: profile[axis] ?? 50 }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 3);
-
-  let chipX = 72;
-  const chipY = Math.max(338, afterCatch + 28);
-
-  ctx.font = "700 19px sans-serif";
-
-  topAxes.forEach(item => {
-    const label = `${AXIS_LABELS[item.axis]} ${item.value}`;
-    const chipW = ctx.measureText(label).width + 32;
-
-    ctx.fillStyle = "rgba(255,255,255,0.10)";
-    ctx.beginPath();
-    if (ctx.roundRect) {
-      ctx.roundRect(chipX, chipY, chipW, 42, 21);
-    } else {
-      ctx.rect(chipX, chipY, chipW, 42);
-    }
-    ctx.fill();
-
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(label, chipX + 16, chipY + 28);
-    chipX += chipW + 10;
-  });
-
   const shareRadarItems =
     getShareCardRadarItems(
       profile
@@ -7965,9 +7937,9 @@ function drawShareCardCanvas(
     shareRadarItems,
     {
       centerX: 266,
-      centerY: 502,
-      radius: 82,
-      labelRadius: 119,
+      centerY: 470,
+      radius: 92,
+      labelRadius: 132,
       theme,
       showGuides: false
     }
@@ -7978,7 +7950,7 @@ function drawShareCardCanvas(
   ctx.fillText(
     "8軸プロフィール",
     408,
-    430
+    398
   );
 
   const scoreText =
@@ -7988,14 +7960,14 @@ function drawShareCardCanvas(
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "700 28px sans-serif";
-  ctx.fillText(scoreText, 408, 474);
+  ctx.fillText(scoreText, 408, 442);
 
   ctx.fillStyle = "rgba(255,255,255,0.82)";
   ctx.font = "18px sans-serif";
   ctx.fillText(
     `回答数 ${diagnosisState.questionCount}問`,
     408,
-    515
+    483
   );
 
   ctx.fillStyle = "rgba(255,255,255,0.68)";
@@ -8004,7 +7976,7 @@ function drawShareCardCanvas(
     ctx,
     "外側ほど傾向が強い / 非公式ファンメイド診断",
     408,
-    552,
+    520,
     295,
     24,
     2
