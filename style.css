@@ -1,0 +1,20 @@
+* { box-sizing: border-box; }
+html { min-height: 100%; }
+body { min-height: 100vh; margin: 0; font-family: "Yu Gothic","YuGothic","Meiryo",system-ui,-apple-system,BlinkMacSystemFont,sans-serif; background:#071018; color:#f4f8fb; }
+button, textarea, input { font-family: inherit; }
+button { cursor:pointer; }
+.hidden { display:none !important; }
+.app-shell { width:100%; min-height:100vh; }
+#startScreen,#questionScreen { width:min(92vw,820px); margin:40px auto; }
+#startScreen { text-align:center; }
+#startScreen h1 { margin:0 0 24px; }
+#startButton,#testButton,.answer-button { border:0; }
+#testButton { margin-top:16px; }
+#debugOutput { white-space:pre-wrap; overflow-wrap:anywhere; }
+#questionText { margin:20px 0; }
+#answerButtons { display:grid; gap:12px; }
+.answer-button { width:100%; padding:14px 16px; border-radius:12px; text-align:left; }
+#answerStatus { min-height:24px; margin-top:12px; }
+.analysis-output { width:100%; padding:20px; white-space:pre-wrap; text-align:left; }
+.noscript-message { max-width:680px; margin:40px auto; padding:20px; border:1px solid rgba(255,255,255,.15); border-radius:14px; background:#132531; color:#fff; }
+@media (max-width:640px) { #startScreen,#questionScreen { width:94vw; margin:18px auto; } }

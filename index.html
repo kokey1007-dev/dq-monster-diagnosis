@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+        content="16の性格軸から、あなたに最も近いドラゴンクエストのモンスターを診断。全44タイプ・可変式質問の非公式ファンメイド性格診断です。">
+  <meta name="theme-color" content="#071018">
+  <title>ドラゴンクエスト モンスター性格診断｜非公式ファンメイド</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ドラゴンクエスト モンスター性格診断">
+  <meta property="og:description" content="16の性格軸から、あなたに最も近いドラゴンクエストのモンスターを診断。全44タイプ・可変式質問。">
+  <meta property="og:image" content="ogp.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ドラゴンクエスト モンスター性格診断">
+  <meta name="twitter:description" content="あなたは、どのドラクエモンスタータイプ？">
+  <meta name="twitter:image" content="ogp.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="app-shell">
+
+    <section id="startScreen">
+      <h1>ドラゴンクエスト モンスター性格診断</h1>
+
+      <button id="startButton" type="button">
+        診断スタート
+      </button>
+
+      <button id="testButton" type="button">
+        🧪 システム確認
+      </button>
+
+      <pre id="debugOutput" aria-live="polite"></pre>
+    </section>
+
+
+    <section id="questionScreen" class="hidden" aria-live="polite">
+
+      <div class="question-meta">
+        回答に合わせて質問内容が変化します
+      </div>
+
+      <h2 id="questionText"></h2>
+
+      <div id="answerButtons"></div>
+
+      <div id="answerStatus" aria-live="polite"></div>
+    </section>
+
+  </main>
+
+  <noscript>
+    <div class="noscript-message">
+      この診断を利用するにはJavaScriptを有効にしてください。
+    </div>
+  </noscript>
+
+  <script src="app.js"></script>
+</body>
+</html>
