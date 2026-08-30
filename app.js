@@ -57,6 +57,345 @@ const AXIS_LABELS = {
   PLAY:  "遊び心",
   COOP:  "協調性"
 };
+
+// -----------------------------------------------------
+// レーダーチャート用設定
+// 結果画面は16軸、共有PNGは見やすさ重視で8軸を表示
+// -----------------------------------------------------
+
+const SHARE_CARD_RADAR_AXES = [
+  "BOLD",
+  "INT",
+  "ADAPT",
+  "CALM",
+  "GRIT",
+  "CONV",
+  "CURI",
+  "COOP"
+];
+
+function clampRadarValue(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, number));
+}
+
+function buildRadarItems(axisList, profile) {
+  return axisList.map(axis => ({
+    axis,
+    label: AXIS_LABELS[axis] ?? axis,
+    value: clampRadarValue(profile[axis] ?? 50)
+  }));
+}
+
+function getRadarPoint(cx, cy, distance, angle) {
+  return {
+    x: cx + Math.cos(angle) * distance,
+    y: cy + Math.sin(angle) * distance
+  };
+}
+
+function buildRadarPolygonPoints(items, cx, cy, radius) {
+  const step = (Math.PI * 2) / items.length;
+
+  return items.map((item, index) => {
+    const angle = -Math.PI / 2 + step * index;
+    return getRadarPoint(
+      cx,
+      cy,
+      radius * (item.value / 100),
+      angle
+    );
+  });
+}
+
+function createRadarSvgElement(tagName, attrs = {}) {
+  const element = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    tagName
+  );
+
+  Object.entries(attrs).forEach(([key, value]) => {
+    element.setAttribute(key, String(value));
+  });
+
+  return element;
+}
+
+function createFinalRadarSection(profile) {
+  const section = document.createElement("section");
+  section.className = "final-radar-section";
+
+  const title = document.createElement("h3");
+  title.className = "final-radar-title";
+  title.textContent = "あなたの16軸レーダー";
+  section.appendChild(title);
+
+  const shell = document.createElement("div");
+  shell.className = "final-radar-shell";
+
+  const svg = createRadarSvgElement("svg", {
+    class: "final-radar-svg",
+    viewBox: "0 0 520 520",
+    role: "img",
+    "aria-label": "16軸レーダーチャート"
+  });
+
+  const cx = 260;
+  const cy = 260;
+  const radius = 150;
+  const labelRadius = 198;
+  const items = buildRadarItems(AXES, profile);
+  const gridValues = [20, 40, 60, 80, 100];
+  const step = (Math.PI * 2) / items.length;
+
+  gridValues.forEach(level => {
+    const points = items
+      .map((_, index) => {
+        const angle = -Math.PI / 2 + step * index;
+        const point = getRadarPoint(
+          cx,
+          cy,
+          radius * (level / 100),
+          angle
+        );
+        return `${point.x},${point.y}`;
+      })
+      .join(" ");
+
+    svg.appendChild(
+      createRadarSvgElement("polygon", {
+        points,
+        class: "final-radar-ring"
+      })
+    );
+  });
+
+  items.forEach((item, index) => {
+    const angle = -Math.PI / 2 + step * index;
+    const outer = getRadarPoint(cx, cy, radius, angle);
+
+    svg.appendChild(
+      createRadarSvgElement("line", {
+        x1: cx,
+        y1: cy,
+        x2: outer.x,
+        y2: outer.y,
+        class: "final-radar-axis-line"
+      })
+    );
+
+    const labelPoint = getRadarPoint(
+      cx,
+      cy,
+      labelRadius,
+      angle
+    );
+
+    let anchor = "middle";
+
+    if (Math.cos(angle) > 0.28) {
+      anchor = "start";
+    } else if (Math.cos(angle) < -0.28) {
+      anchor = "end";
+    }
+
+    const label = createRadarSvgElement("text", {
+      x: labelPoint.x,
+      y: labelPoint.y,
+      class: "final-radar-label",
+      "text-anchor": anchor,
+      "dominant-baseline": "middle"
+    });
+
+    label.textContent = item.label;
+    svg.appendChild(label);
+  });
+
+  const polygonPoints = buildRadarPolygonPoints(
+    items,
+    cx,
+    cy,
+    radius
+  )
+    .map(point => `${point.x},${point.y}`)
+    .join(" ");
+
+  svg.appendChild(
+    createRadarSvgElement("polygon", {
+      points: polygonPoints,
+      class: "final-radar-area"
+    })
+  );
+
+  buildRadarPolygonPoints(items, cx, cy, radius).forEach(point => {
+    svg.appendChild(
+      createRadarSvgElement("circle", {
+        cx: point.x,
+        cy: point.y,
+        r: 3.2,
+        class: "final-radar-point"
+      })
+    );
+  });
+
+  gridValues.forEach(level => {
+    const guide = createRadarSvgElement("text", {
+      x: cx + 8,
+      y: cy - radius * (level / 100) + 4,
+      class: "final-radar-guide",
+      "text-anchor": "start"
+    });
+
+    guide.textContent = String(level);
+    svg.appendChild(guide);
+  });
+
+  shell.appendChild(svg);
+  section.appendChild(shell);
+
+  const caption = document.createElement("p");
+  caption.className = "final-radar-caption";
+  caption.textContent = "外側ほどその傾向が強いプロフィールです。共有PNGでは見やすさ重視の8軸版を使います。";
+  section.appendChild(caption);
+
+  return section;
+}
+
+function getShareCardRadarItems(profile) {
+  return buildRadarItems(
+    SHARE_CARD_RADAR_AXES,
+    profile
+  );
+}
+
+function drawRadarChartOnCanvas(
+  ctx,
+  items,
+  options = {}
+) {
+  const centerX = options.centerX ?? 0;
+  const centerY = options.centerY ?? 0;
+  const radius = options.radius ?? 80;
+  const labelRadius = options.labelRadius ?? radius + 28;
+  const theme = options.theme ?? {};
+  const showGuides = options.showGuides ?? false;
+  const step = (Math.PI * 2) / items.length;
+  const gridValues = [25, 50, 75, 100];
+
+  ctx.save();
+
+  gridValues.forEach(level => {
+    ctx.beginPath();
+
+    items.forEach((_, index) => {
+      const angle = -Math.PI / 2 + step * index;
+      const point = getRadarPoint(
+        centerX,
+        centerY,
+        radius * (level / 100),
+        angle
+      );
+
+      if (index === 0) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    });
+
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  items.forEach((item, index) => {
+    const angle = -Math.PI / 2 + step * index;
+    const outer = getRadarPoint(
+      centerX,
+      centerY,
+      radius,
+      angle
+    );
+
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(outer.x, outer.y);
+    ctx.strokeStyle = "rgba(255,255,255,0.16)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const labelPoint = getRadarPoint(
+      centerX,
+      centerY,
+      labelRadius,
+      angle
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
+    ctx.font = "700 14px sans-serif";
+    ctx.textAlign = Math.cos(angle) > 0.28 ? "left" : Math.cos(angle) < -0.28 ? "right" : "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      item.label,
+      labelPoint.x,
+      labelPoint.y
+    );
+  });
+
+  const polygonPoints = buildRadarPolygonPoints(
+    items,
+    centerX,
+    centerY,
+    radius
+  );
+
+  ctx.beginPath();
+  polygonPoints.forEach((point, index) => {
+    if (index === 0) {
+      ctx.moveTo(point.x, point.y);
+    } else {
+      ctx.lineTo(point.x, point.y);
+    }
+  });
+  ctx.closePath();
+
+  ctx.fillStyle = theme.soft ?? "rgba(132,207,255,0.24)";
+  ctx.strokeStyle = theme.accent ?? "#84cfff";
+  ctx.lineWidth = 2.5;
+  ctx.fill();
+  ctx.stroke();
+
+  polygonPoints.forEach(point => {
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = theme.accent2 ?? "#bce8ff";
+    ctx.fill();
+  });
+
+  if (showGuides) {
+    ctx.fillStyle = "rgba(255,255,255,0.58)";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+
+    [25, 50, 75, 100].forEach(level => {
+      ctx.fillText(
+        String(level),
+        centerX + 6,
+        centerY - radius * (level / 100)
+      );
+    });
+  }
+
+  ctx.restore();
+}
+
 // =====================================================
 // ノーマル22タイプ
 // =====================================================
@@ -7594,27 +7933,53 @@ function drawShareCardCanvas(
     .slice(0, 3);
 
   let chipX = 72;
-  const chipY = Math.max(365, afterCatch + 50);
+  const chipY = Math.max(338, afterCatch + 28);
 
-  ctx.font = "700 20px sans-serif";
+  ctx.font = "700 19px sans-serif";
 
   topAxes.forEach(item => {
     const label = `${AXIS_LABELS[item.axis]} ${item.value}`;
-    const chipW = ctx.measureText(label).width + 34;
+    const chipW = ctx.measureText(label).width + 32;
 
     ctx.fillStyle = "rgba(255,255,255,0.10)";
     ctx.beginPath();
     if (ctx.roundRect) {
-      ctx.roundRect(chipX, chipY, chipW, 46, 23);
+      ctx.roundRect(chipX, chipY, chipW, 42, 21);
     } else {
-      ctx.rect(chipX, chipY, chipW, 46);
+      ctx.rect(chipX, chipY, chipW, 42);
     }
     ctx.fill();
 
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(label, chipX + 17, chipY + 30);
-    chipX += chipW + 12;
+    ctx.fillText(label, chipX + 16, chipY + 28);
+    chipX += chipW + 10;
   });
+
+  const shareRadarItems =
+    getShareCardRadarItems(
+      profile
+    );
+
+  drawRadarChartOnCanvas(
+    ctx,
+    shareRadarItems,
+    {
+      centerX: 266,
+      centerY: 502,
+      radius: 82,
+      labelRadius: 119,
+      theme,
+      showGuides: false
+    }
+  );
+
+  ctx.fillStyle = theme.accent2;
+  ctx.font = "700 20px sans-serif";
+  ctx.fillText(
+    "8軸プロフィール",
+    408,
+    430
+  );
 
   const scoreText =
     result.category === "SPECIAL"
@@ -7622,15 +7987,27 @@ function drawShareCardCanvas(
       : `タイプ一致度 ${result.score.toFixed(1)}`;
 
   ctx.fillStyle = "#ffffff";
-  ctx.font = "700 27px sans-serif";
-  ctx.fillText(scoreText, 72, 508);
+  ctx.font = "700 28px sans-serif";
+  ctx.fillText(scoreText, 408, 474);
 
-  ctx.fillStyle = "rgba(255,255,255,0.70)";
+  ctx.fillStyle = "rgba(255,255,255,0.82)";
   ctx.font = "18px sans-serif";
   ctx.fillText(
-    `回答数 ${diagnosisState.questionCount}問  /  非公式ファンメイド診断`,
-    72,
-    562
+    `回答数 ${diagnosisState.questionCount}問`,
+    408,
+    515
+  );
+
+  ctx.fillStyle = "rgba(255,255,255,0.68)";
+  ctx.font = "17px sans-serif";
+  drawWrappedCanvasText(
+    ctx,
+    "外側ほど傾向が強い / 非公式ファンメイド診断",
+    408,
+    552,
+    295,
+    24,
+    2
   );
 }
 
@@ -7922,6 +8299,74 @@ function ensureFinalResultStyles() {
       margin: 12px auto 24px;
       font-size: 15px;
       opacity: 0.9;
+    }
+
+    .final-radar-section {
+      max-width: 760px;
+      margin: 12px auto 26px;
+      padding: 18px 14px 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+      text-align: left;
+      backdrop-filter: blur(4px);
+    }
+
+    .final-radar-title {
+      margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 1.4;
+    }
+
+    .final-radar-shell {
+      width: min(100%, 560px);
+      margin: 0 auto;
+    }
+
+    .final-radar-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .final-radar-ring {
+      fill: none;
+      stroke: rgba(255,255,255,0.14);
+      stroke-width: 1;
+    }
+
+    .final-radar-axis-line {
+      stroke: rgba(255,255,255,0.14);
+      stroke-width: 1;
+    }
+
+    .final-radar-area {
+      fill: var(--result-accent-soft, rgba(132,207,255,0.16));
+      stroke: var(--result-accent, #84cfff);
+      stroke-width: 2.5;
+    }
+
+    .final-radar-point {
+      fill: var(--result-accent2, #bce8ff);
+    }
+
+    .final-radar-label {
+      fill: rgba(255,255,255,0.86);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .final-radar-guide {
+      fill: rgba(255,255,255,0.52);
+      font-size: 10px;
+    }
+
+    .final-radar-caption {
+      margin: 10px 0 0;
+      font-size: 12px;
+      line-height: 1.7;
+      opacity: 0.72;
     }
 
     .final-axis-title {
@@ -8335,6 +8780,14 @@ function ensureFinalResultStyles() {
 
       .final-share-actions {
         grid-template-columns: 1fr;
+      }
+
+      .final-radar-section {
+        padding: 16px 10px 12px;
+      }
+
+      .final-radar-label {
+        font-size: 9.5px;
       }
     }
   `;
@@ -11174,6 +11627,9 @@ function showFinalResult() {
   }
 
   card.appendChild(score);
+  card.appendChild(
+    createFinalRadarSection(profile)
+  );
   card.appendChild(axisTitle);
   card.appendChild(
     createFinalAxisGrid(profile)
