@@ -7949,7 +7949,7 @@ function drawShareCardCanvas(
   ctx.font = "700 20px sans-serif";
   ctx.fillText(
     "8軸プロフィール",
-    408,
+    468,
     398
   );
 
@@ -7960,13 +7960,13 @@ function drawShareCardCanvas(
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "700 28px sans-serif";
-  ctx.fillText(scoreText, 408, 442);
+  ctx.fillText(scoreText, 468, 442);
 
   ctx.fillStyle = "rgba(255,255,255,0.82)";
   ctx.font = "18px sans-serif";
   ctx.fillText(
     `回答数 ${diagnosisState.questionCount}問`,
-    408,
+    468,
     483
   );
 
@@ -7975,9 +7975,9 @@ function drawShareCardCanvas(
   drawWrappedCanvasText(
     ctx,
     "外側ほど傾向が強い / 非公式ファンメイド診断",
-    408,
+    468,
     520,
-    295,
+    250,
     24,
     2
   );
