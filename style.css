@@ -18,3 +18,33 @@ button { cursor:pointer; }
 .analysis-output { width:100%; padding:20px; white-space:pre-wrap; text-align:left; }
 .noscript-message { max-width:680px; margin:40px auto; padding:20px; border:1px solid rgba(255,255,255,.15); border-radius:14px; background:#132531; color:#fff; }
 @media (max-width:640px) { #startScreen,#questionScreen { width:94vw; margin:18px auto; } }
+
+
+/* =========================================
+   非公式ファンメイド・権利表記
+========================================= */
+
+.site-disclaimer {
+  width: min(92vw, 820px);
+  margin: 20px auto 34px;
+  padding: 14px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(220, 232, 238, 0.62);
+  font-size: 11px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.site-disclaimer p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .site-disclaimer {
+    width: 94vw;
+    margin: 14px auto 24px;
+    padding: 12px 10px;
+    font-size: 10px;
+    line-height: 1.75;
+  }
+}
